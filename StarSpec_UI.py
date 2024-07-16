@@ -82,7 +82,7 @@ def open_phd2():
 #submit the ZWO settings to the INDI server
 def submitZWOsettings():
     gain = ZWOgain_text.get("1.0", "end-1c")
-    exposure_time = float(ZWOexposure_time_text.get("1.0", "end-1c").strip())
+    exposure_time = ZWOexposure_time_text.get("1.0", "end-1c")
     temperature = ZWOtemperature_text.get("1.0", "end-1c")
 
     if not gain.strip():  #check if the content is empty or contains only whitespace
@@ -291,16 +291,16 @@ west = ctk.CTkButton(live_loop_frame,
 west.pack(padx=10, pady=10, anchor="nw", expand=1)
 west.place(x=680, y=344)
 
-test_image = Image.open("JT.jpg")
-jt = ctk.CTkImage(dark_image=test_image, size=(470, 315))
+# test_image = Image.open("JT.jpg")
+# jt = ctk.CTkImage(dark_image=test_image, size=(470, 315))
 
-label = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
-label.pack()
-label.place(x=100, y=60)
+# label = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
+# label.pack()
+# label.place(x=100, y=60)
 
-label2 = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
-label2.pack()
-label2.place(x=100, y=380)
+# label2 = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
+# label2.pack()
+# label2.place(x=100, y=380)
 
 start_Z_liveloop = ctk.CTkButton(live_loop_frame,
                                 text="Start Live Loop", font=("Helvetica", 18), text_color="white",
