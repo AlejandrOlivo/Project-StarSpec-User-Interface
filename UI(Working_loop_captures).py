@@ -16,6 +16,7 @@ print("Initializing INDI Server...")
 time.sleep(6)
 
 import os
+from datetime import datetime
 from gi.repository import GObject as gobject
 import tkinter
 from tkinter import *
@@ -31,12 +32,13 @@ import dbus
 from dbus import glib
 import threading
 
+
 def ZWOLiveThreadFunc():
     while True:
         if ZWOLiveActive:
             #get exposure time for image capture
             try:
-                exptime = int(ZWOexposure_time_text.get("1.0", "end-1c"))
+                exptime = float(ZWOexposure_time_text.get("1.0", "end-1c"))
             except ValueError:
                 messagebox.showerror("Invalid Input", "Please enter a valid exposure time, using exposure time = 1")
                 exptime = 1
@@ -44,30 +46,33 @@ def ZWOLiveThreadFunc():
     
             #display image
             test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/ZWO/ZLIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
-            label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
-            label.place(x=100, y=60) 
+            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(450, 300))
+            label = ctk.CTkLabel(live_loop_frame, text="Z Cam", image=Z_live_test)
+            label.place(x=20, y=20) 
             time.sleep(exptime)
         time.sleep(1)
     
 def PILiveThreadFunc():
     while True:
         if PILiveActive:
+            print(f"PILIve 1  = " + datetime.now().strftime("%H:%M:%S"))
             #get exposure time for image capture
             try:
-                exptime = int(PIexposure_time_text.get("1.0", "end-1c"))
+                exptime = float(PIexposure_time_text.get("1.0", "end-1c"))
             except ValueError:
                 messagebox.showerror("Invalid Input", "Please enter a valid exposure time, using exposure time = 1")
                 exptime = 1
             takePIPicture(exptime, "/home/starspec/STSC/STSCvenv/UI/LIVE/PI", "PILIVE") #take image
     
             #display image
+            print(f"PILive 2 = " + datetime.now().strftime("%H:%M:%S"))
             test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/PI/PILIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
-            label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
-            label.place(x=100, y=380) 
-            time.sleep(exptime)
-        time.sleep(1)
+            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(450, 300))
+            label = ctk.CTkLabel(live_loop_frame, text="PI Cam", image=Z_live_test)
+            label.place(x=20, y=350) 
+            print(f"PILive 3 = " + datetime.now().strftime("%H:%M:%S"))
+        else:
+            time.sleep(1)
 
 def stopLiveZImage():
     global ZWOLiveActive
@@ -110,6 +115,7 @@ def takeZWOPicture(exp_time, save_location, upload_prefix):
     ccdState = "Busy"
     while True:
         ccdState = iface.getPropertyState(ZWOcam, "CCD_EXPOSURE")
+        
         if (ccdState != "Ok"):
             time.sleep(1)
         else:
@@ -117,6 +123,8 @@ def takeZWOPicture(exp_time, save_location, upload_prefix):
     
 #takes and saves a picture on the ZWO camera
 def takePIPicture(exp_time, save_location, upload_prefix):
+    time.sleep(1)
+    print(f"take PI 1 = " + datetime.now().strftime("%H:%M:%S"))
     print(f"Taking a CCD exposure on the PI camera...")
     iface.setText(PIcam, "UPLOAD_SETTINGS", "UPLOAD_DIR", save_location)
     iface.sendProperty(PIcam, "UPLOAD_SETTINGS")
@@ -124,16 +132,14 @@ def takePIPicture(exp_time, save_location, upload_prefix):
     iface.sendProperty(PIcam, "UPLOAD_SETTINGS")
     iface.setNumber(PIcam, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", float(exp_time))
     iface.sendProperty(PIcam, "CCD_EXPOSURE")
-
+    print(f"take PI 2 = " + datetime.now().strftime("%H:%M:%S"))
     #wait until exposure is done
+    print(iface.getPropertyState(PIcam, "CCD_EXPOSURE"))
     ccdState = "Busy"
-    while True:
-        ccdState = iface.getPropertyState(PIcam, "CCD_EXPOSURE")
-        if (ccdState != "Ok"):
-            time.sleep(1)
-        else:
-            break
-    print("Image captured from PI Camera.")
+    while iface.getPropertyState(PIcam, "CCD_EXPOSURE")== "Busy":
+        time.sleep(1)
+
+    print(f"take PI 3 = " + datetime.now().strftime("%H:%M:%S"))
 
 #submit the ZWO settings to the INDI server
 def submitZWOsettings():
@@ -153,7 +159,7 @@ def submitZWOsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
     print(f"Gain is set at {gain_value}")
-
+    '''
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
     else:
@@ -165,7 +171,7 @@ def submitZWOsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
     print(f"Exposure time is set at {exposure_time_value} seconds")
-    
+    '''    
     if not temperature.strip():  #check if the content is empty or contains only whitespace
         temperature_value = 0
     else:
@@ -195,7 +201,7 @@ def submitPIsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
     print(f"Gain is set at {gain_value}")
-
+'''
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
     else:
@@ -207,7 +213,7 @@ def submitPIsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
     print(f"Exposure time is set at {exposure_time_value} seconds")
-
+'''
 #move the mount north
 def moveNorth():
     print("Mount moved north")
@@ -257,8 +263,8 @@ remote_object = bus.get_object("org.kde.kstars", "/KStars/INDI")
 
 # Introspection returns an XML document containing information
 # about the methods supported by an interface.
-#print("Introspection data:\n")
-#print(remote_object.Introspect())
+# print("Introspection data:\n")
+# print(remote_object.Introspect())
 
 # Get INDI interface
 iface = dbus.Interface(remote_object, 'org.kde.kstars.INDI')
@@ -331,6 +337,11 @@ iface.setSwitch(ZWOcam, "UPLOAD_MODE", "UPLOAD_LOCAL", "On")
 iface.sendProperty(ZWOcam, "UPLOAD_MODE")
 iface.setSwitch(PIcam, "UPLOAD_MODE", "UPLOAD_LOCAL", "On")
 iface.sendProperty(PIcam, "UPLOAD_MODE")
+
+iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RAW", "Off")
+iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
+iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RGB", "On")
+iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
  
 #set location of images
 iface.setText(ZWOcam, "UPLOAD_SETTINGS", "UPLOAD_DIR", "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures")
@@ -699,7 +710,7 @@ capture_settings.place(x=190, y=10)
 
 phd2_button = ctk.CTkButton(capture_settings_frame,
                             text="Open PHD2", font=("Helvetica", 18), text_color="white",
-                            command=lambda:open_phd2,
+                            command=open_phd2,
                             fg_color="black", bg_color="black", hover_color="dark grey",
                             width=50,
                             anchor="nw",
@@ -710,7 +721,7 @@ phd2_button.place(x=715, y=10)
 
 capture_ZWO_image = ctk.CTkButton(capture_settings_frame,
                                     text="Capture ZWO Image", font=("Helvetica", 18), text_color="white",
-                                    command=lambda:takeZWOPicture(int(exposure_time_text.get("1.0", "end-1c")), "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures", "ZWO_IMAGE_XXX"),
+                                    command=lambda:takeZWOPicture(exposure_time_text.get("1.0", "end-1c"), "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures", "ZWO_IMAGE_XXX"),
                                     fg_color="black", bg_color="black", hover_color="dark grey",
                                     height=30, width=80,
                                     border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
@@ -719,7 +730,7 @@ capture_ZWO_image.place(x=230, y=680)
 
 capture_PI_image = ctk.CTkButton(capture_settings_frame,
                                     text="Capture PI Image", font=("Helvetica", 18), text_color="white",
-                                    command=lambda:takePIPicture(int(exposure_time_text.get("1.0", "end-1c"))),
+                                    command=lambda:takeZWOPicture(ZWOexposure_time_text.get("1.0", "end-1c"), "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures", "ZWO_IMAGE_XXX"),
                                     fg_color="black", bg_color="black", hover_color="dark grey",
                                     height=30, width=80,
                                     border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
