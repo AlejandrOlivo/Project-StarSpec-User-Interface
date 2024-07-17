@@ -124,7 +124,6 @@ def takeZWOPicture(exp_time, save_location, upload_prefix):
 #takes and saves a picture on the ZWO camera
 def takePIPicture(exp_time, save_location, upload_prefix):
     time.sleep(1)
-    print(f"take PI 1 = " + datetime.now().strftime("%H:%M:%S"))
     print(f"Taking a CCD exposure on the PI camera...")
     iface.setText(PIcam, "UPLOAD_SETTINGS", "UPLOAD_DIR", save_location)
     iface.sendProperty(PIcam, "UPLOAD_SETTINGS")
@@ -158,8 +157,8 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
-    print(f"Gain is set at {gain_value}")
-    '''
+    print(f"ZWO gain is set at {gain_value}")
+
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
     else:
@@ -170,10 +169,10 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    print(f"Exposure time is set at {exposure_time_value} seconds")
-    '''    
+    print(f"ZWO exposure time is set at {exposure_time_value} seconds")
+ 
     if not temperature.strip():  #check if the content is empty or contains only whitespace
-        temperature_value = 0
+        temperature_value = 21
     else:
         try:
             temperature_value = int(temperature)
@@ -182,7 +181,7 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid temperature")
             return
-    print(f"Temperature is set at {temperature_value} Â°C")
+    print(f"Temperature is set at {temperature_value} °C")
 
 #submit the PI settings to the INDI server
 def submitPIsettings():
@@ -200,8 +199,8 @@ def submitPIsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
-    print(f"Gain is set at {gain_value}")
-'''
+    print(f"PI gain is set at {gain_value}")
+
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
     else:
@@ -212,8 +211,8 @@ def submitPIsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    print(f"Exposure time is set at {exposure_time_value} seconds")
-'''
+    print(f"PI exposure time is set at {exposure_time_value} seconds")
+
 #move the mount north
 def moveNorth():
     print("Mount moved north")
@@ -466,17 +465,6 @@ west = ctk.CTkButton(live_loop_frame,
                         border_color="white", border_width=2, background_corner_colors=("black", "#624146", "#703d41", "black"))
 west.pack(padx=10, pady=10, anchor="nw", expand=1)
 west.place(x=680, y=344)
-
-# test_image = Image.open("JT.jpg")
-# jt = ctk.CTkImage(dark_image=test_image, size=(470, 315))
-
-# label = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
-# label.pack()
-# label.place(x=100, y=60)
-
-# label2 = ctk.CTkLabel(live_loop_frame, width=470, height=315, text="")
-# label2.pack()
-# label2.place(x=100, y=380)
 
 start_Z_liveloop = ctk.CTkButton(live_loop_frame,
                                 text="Start Live Loop", font=("Helvetica", 18), text_color="white",
