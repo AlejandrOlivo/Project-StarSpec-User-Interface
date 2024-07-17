@@ -32,7 +32,6 @@ import dbus
 from dbus import glib
 import threading
 
-
 def ZWOLiveThreadFunc():
     while True:
         if ZWOLiveActive:
@@ -45,11 +44,10 @@ def ZWOLiveThreadFunc():
             takeZWOPicture(exptime, "/home/starspec/STSC/STSCvenv/UI/LIVE/ZWO", "ZLIVE") #take image
     
             #display image
-            test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/ZWO/ZLIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
+            image1 = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/ZWO/ZLIVE.fits")
+            Z_live_test = ctk.CTkImage(dark_image=image1, size=(470, 315))
             label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
-            label.place(x=100, y=60) 
-            time.sleep(exptime)
+            label.place(x=100, y=60)
         time.sleep(1)
     
 def PILiveThreadFunc():
@@ -64,12 +62,11 @@ def PILiveThreadFunc():
             takePIPicture(exptime, "/home/starspec/STSC/STSCvenv/UI/LIVE/PI", "PILIVE") #take image
     
             #display image
-            test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/PI/PILIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
+            image2 = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/PI/PILIVE.fits")
+            Z_live_test = ctk.CTkImage(dark_image=image2, size=(470, 315))
             label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
             label.place(x=100, y=380) 
-        else:
-            time.sleep(1)
+        time.sleep(1)
 
 def stopLiveZImage():
     global ZWOLiveActive
@@ -145,7 +142,7 @@ def submitZWOsettings():
     exposure_time = float(ZWOexposure_time_text.get("1.0", "end-1c"))
     temperature = ZWOtemperature_text.get("1.0", "end-1c")
 
-    if not gain.strip():  #check if the content is empty or contains only whitespace
+    if gain == "":
         gain_value = 0
     else:
         try:
@@ -157,21 +154,20 @@ def submitZWOsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
     print(f"ZWO gain is set at {gain_value}")
-    '''
-    if not exposure_time.strip():  #check if the content is empty or contains only whitespace
+
+    if ZWOexposure_time_text.get("1.0", "end-1c") == "":
         exposure_time_value = 1
     else:
         try:
-            exposure_time_value = int(exposure_time)
+            exposure_time_value = float(exposure_time)
             iface.setNumber(ZWOcam, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", exposure_time_value)
             #iface.sendProperty(ZWOcam, "CCD_EXPOSURE")
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    '''
     print(f"ZWO exposure time is set at {exposure_time} seconds")
         
-    if not temperature.strip():  #check if the content is empty or contains only whitespace
+    if temperature == "":
         temperature_value = 21
     else:
         try:
@@ -188,7 +184,7 @@ def submitPIsettings():
     gain = PIgain_text.get("1.0", "end-1c")
     exposure_time = float(PIexposure_time_text.get("1.0", "end-1c"))
 
-    if not gain.strip():  #check if the content is empty or contains only whitespace
+    if gain == "":
         gain_value = 0
     else:
         try:
@@ -200,18 +196,18 @@ def submitPIsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
     print(f"PI gain is set at {gain_value}")
-    '''
-    if not exposure_time.strip():  #check if the content is empty or contains only whitespace
+
+    if PIexposure_time_text.get("1.0", "end-1c") == "":
         exposure_time_value = 1
     else:
         try:
-            exposure_time_value = int(exposure_time)
+            exposure_time_value = float(exposure_time)
             iface.setNumber(PIcam, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", exposure_time_value)
             #iface.sendProperty(ZWOcam, "CCD_EXPOSURE")
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    '''
+
     print(f"PI exposure time is set at {exposure_time} seconds")
 
 #move the mount north
@@ -371,7 +367,7 @@ root.title("StarSpec UI")
 image = Image.open("Space_Image.jpeg")
 bg = ctk.CTkImage(dark_image=image, size=(840, 720))
 
-#create 1st frame (live loop)
+#create 1st frame (live view)
 live_loop_frame = ctk.CTkFrame(root)
 live_loop_frame.pack(fill="both", expand=1)
 bg_image1 = ctk.CTkLabel(live_loop_frame, image=bg, text="")
@@ -386,7 +382,20 @@ bg_image3 = ctk.CTkLabel(settings_frame, image=bg, text="")
 bg_image3.pack(expand=1)
 #----- END INITIALIZE GUI -----
 
-#----- START LIVE LOOP BUTTONS -----
+#----- START LIVE VIEW BUTTONS -----
+label_bg = ctk.CTkImage(dark_image=image, size=(75, 30))
+Z_cam_label = ctk.CTkLabel(live_loop_frame,
+                            text="ZWO Cam", font=("Helvetica", 16), text_color="white",
+                            image=label_bg)
+Z_cam_label.pack()
+Z_cam_label.place(x=15, y=200)
+
+Pi_cam_label = ctk.CTkLabel(live_loop_frame,
+                            text="PI Cam", font=("Helvetica", 16), text_color="white",
+                            image=label_bg)
+Pi_cam_label.pack()
+Pi_cam_label.place(x=15, y=530)
+
 live_view = ctk.CTkButton(live_loop_frame,
                             text="Live View", font=("Helvetica", 18), text_color="white",
                             command=lambda:live_loop_frame.tkraise(),
@@ -683,9 +692,9 @@ PIexposure_time_text = ctk.CTkTextbox(settings_frame,
                                         activate_scrollbars="False")
 PIexposure_time_text.pack(anchor="nw", expand=1)
 PIexposure_time_text.place(x=440, y=150)
-#----- END LOOP SETTINGS BUTTONS -----
+#----- END SETTINGS BUTTONS -----
 
-live_loop_frame.tkraise() #start the UI on the live loop frame
+live_loop_frame.tkraise() #start the UI on the live view frame
 
 #Run UI
 root.mainloop()
