@@ -46,16 +46,15 @@ def ZWOLiveThreadFunc():
     
             #display image
             test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/ZWO/ZLIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(450, 300))
-            label = ctk.CTkLabel(live_loop_frame, text="Z Cam", image=Z_live_test)
-            label.place(x=20, y=20) 
+            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
+            label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
+            label.place(x=100, y=60) 
             time.sleep(exptime)
         time.sleep(1)
     
 def PILiveThreadFunc():
     while True:
         if PILiveActive:
-            print(f"PILIve 1  = " + datetime.now().strftime("%H:%M:%S"))
             #get exposure time for image capture
             try:
                 exptime = float(PIexposure_time_text.get("1.0", "end-1c"))
@@ -65,19 +64,17 @@ def PILiveThreadFunc():
             takePIPicture(exptime, "/home/starspec/STSC/STSCvenv/UI/LIVE/PI", "PILIVE") #take image
     
             #display image
-            print(f"PILive 2 = " + datetime.now().strftime("%H:%M:%S"))
             test_image = Image.open("/home/starspec/STSC/STSCvenv/UI/LIVE/PI/PILIVE.fits")
-            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(450, 300))
-            label = ctk.CTkLabel(live_loop_frame, text="PI Cam", image=Z_live_test)
-            label.place(x=20, y=350) 
-            print(f"PILive 3 = " + datetime.now().strftime("%H:%M:%S"))
+            Z_live_test = ctk.CTkImage(dark_image=test_image, size=(470, 315))
+            label = ctk.CTkLabel(live_loop_frame, text="", image=Z_live_test)
+            label.place(x=100, y=380) 
         else:
             time.sleep(1)
 
 def stopLiveZImage():
     global ZWOLiveActive
     ZWOLiveActive = 0
-    print("ZWOLiveActive --> " + str(ZWOLiveActive))
+    print("ZWO Live image capture has stopped.")
 
 def startLiveZImage():
     global ZWOLiveActive
@@ -87,7 +84,7 @@ def startLiveZImage():
 def stopLivePIImage():
     global PILiveActive
     PILiveActive = 0
-    print("PILiveActive --> " + str(PILiveActive))
+    print("PI Live image capture has stopped.")
 
 def startLivePIImage():
     global PILiveActive
@@ -101,6 +98,10 @@ def open_phd2():
     iface.sendProperty(PIcam, "CONNECTION")
     result = subprocess.Popen(['phd2'], stdout = subprocess.PIPE, stderr = subprocess.PIPE, text = TRUE)
     print("Opening PHD2...")
+
+#open spectrum analysis
+def open_analysis():
+    print("Displaying spectrum analysis")
 
 #takes and saves a picture on the ZWO camera
 def takeZWOPicture(exp_time, save_location, upload_prefix):
@@ -123,28 +124,25 @@ def takeZWOPicture(exp_time, save_location, upload_prefix):
     
 #takes and saves a picture on the ZWO camera
 def takePIPicture(exp_time, save_location, upload_prefix):
-    time.sleep(1)
-    print(f"take PI 1 = " + datetime.now().strftime("%H:%M:%S"))
-    print(f"Taking a CCD exposure on the PI camera...")
     iface.setText(PIcam, "UPLOAD_SETTINGS", "UPLOAD_DIR", save_location)
     iface.sendProperty(PIcam, "UPLOAD_SETTINGS")
     iface.setText(PIcam, "UPLOAD_SETTINGS", "UPLOAD_PREFIX", upload_prefix)
     iface.sendProperty(PIcam, "UPLOAD_SETTINGS")
     iface.setNumber(PIcam, "CCD_EXPOSURE", "CCD_EXPOSURE_VALUE", float(exp_time))
     iface.sendProperty(PIcam, "CCD_EXPOSURE")
-    print(f"take PI 2 = " + datetime.now().strftime("%H:%M:%S"))
+    
+    print(f"take PI 1 = " + datetime.now().strftime("%H:%M:%S"))
     #wait until exposure is done
-    print(iface.getPropertyState(PIcam, "CCD_EXPOSURE"))
     ccdState = "Busy"
     while iface.getPropertyState(PIcam, "CCD_EXPOSURE")== "Busy":
         time.sleep(1)
-
-    print(f"take PI 3 = " + datetime.now().strftime("%H:%M:%S"))
+    
+    print(f"take PI 2 = " + datetime.now().strftime("%H:%M:%S"))
 
 #submit the ZWO settings to the INDI server
 def submitZWOsettings():
     gain = ZWOgain_text.get("1.0", "end-1c")
-    exposure_time = float(ZWOexposure_time_text.get("1.0", "end-1c").strip())
+    exposure_time = float(ZWOexposure_time_text.get("1.0", "end-1c"))
     temperature = ZWOtemperature_text.get("1.0", "end-1c")
 
     if not gain.strip():  #check if the content is empty or contains only whitespace
@@ -158,7 +156,7 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
-    print(f"Gain is set at {gain_value}")
+    print(f"ZWO gain is set at {gain_value}")
     '''
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
@@ -170,10 +168,11 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    print(f"Exposure time is set at {exposure_time_value} seconds")
-    '''    
+    '''
+    print(f"ZWO exposure time is set at {exposure_time} seconds")
+        
     if not temperature.strip():  #check if the content is empty or contains only whitespace
-        temperature_value = 0
+        temperature_value = 21
     else:
         try:
             temperature_value = int(temperature)
@@ -182,12 +181,12 @@ def submitZWOsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid temperature")
             return
-    print(f"Temperature is set at {temperature_value} Â°C")
+    print(f"Temperature is set at {temperature_value} °C")
 
 #submit the PI settings to the INDI server
 def submitPIsettings():
     gain = PIgain_text.get("1.0", "end-1c")
-    exposure_time = PIexposure_time_text.get("1.0", "end-1c")
+    exposure_time = float(PIexposure_time_text.get("1.0", "end-1c"))
 
     if not gain.strip():  #check if the content is empty or contains only whitespace
         gain_value = 0
@@ -200,8 +199,8 @@ def submitPIsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
-    print(f"Gain is set at {gain_value}")
-'''
+    print(f"PI gain is set at {gain_value}")
+    '''
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
     else:
@@ -212,8 +211,9 @@ def submitPIsettings():
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid exposure time")
             return
-    print(f"Exposure time is set at {exposure_time_value} seconds")
-'''
+    '''
+    print(f"PI exposure time is set at {exposure_time} seconds")
+
 #move the mount north
 def moveNorth():
     print("Mount moved north")
@@ -263,8 +263,8 @@ remote_object = bus.get_object("org.kde.kstars", "/KStars/INDI")
 
 # Introspection returns an XML document containing information
 # about the methods supported by an interface.
-#print("Introspection data:\n")
-#print(remote_object.Introspect())
+# print("Introspection data:\n")
+# print(remote_object.Introspect())
 
 # Get INDI interface
 iface = dbus.Interface(remote_object, 'org.kde.kstars.INDI')
@@ -378,194 +378,198 @@ bg_image1 = ctk.CTkLabel(live_loop_frame, image=bg, text="")
 bg_image1.pack(expand=1)
 bg_image1.place(x=0, y=0)
 
-#create 2nd frame (capture settings)
-capture_settings_frame = ctk.CTkFrame(root)
-capture_settings_frame.pack(fill="both", expand=1)
-capture_settings_frame.place(x=0, y=0)
-bg_image2 = ctk.CTkLabel(capture_settings_frame, image=bg, text="")
-bg_image2.pack(expand=1)
-
-#create 3rd frame (loop settings)
-loop_settings_frame = ctk.CTkFrame(root)
-loop_settings_frame.pack(fill="both", expand=1)
-loop_settings_frame.place(x=0, y=0)
-bg_image3 = ctk.CTkLabel(loop_settings_frame, image=bg, text="")
+#create 2nd frame (loop settings)
+settings_frame = ctk.CTkFrame(root)
+settings_frame.pack(fill="both", expand=1)
+settings_frame.place(x=0, y=0)
+bg_image3 = ctk.CTkLabel(settings_frame, image=bg, text="")
 bg_image3.pack(expand=1)
 #----- END INITIALIZE GUI -----
 
-
 #----- START LIVE LOOP BUTTONS -----
 live_view = ctk.CTkButton(live_loop_frame,
-                        text="Live View", font=("Helvetica", 18), text_color="white",
-                        command=lambda:live_loop_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+                            text="Live View", font=("Helvetica", 18), text_color="white",
+                            command=lambda:live_loop_frame.tkraise(),
+                            fg_color="black", bg_color="black", hover_color="dark grey",
+                            width=50,
+                            anchor="nw",
+                            corner_radius=10,
+                            border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 live_view.pack(expand=1)
-live_view.place(x=20, y=680)
+live_view.place(x=10, y=10)
 
 loop_settings = ctk.CTkButton(live_loop_frame,
-                        text="Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:loop_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
+                                text="Settings", font=("Helvetica", 18), text_color="white",
+                                command=lambda:settings_frame.tkraise(),
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                width=50,
+                                anchor="nw",
+                                corner_radius=10,
+                                border_color="white", border_width=2)
 loop_settings.pack(expand=1)
-loop_settings.place(x=150, y=680)
-
-capture_settings = ctk.CTkButton(live_loop_frame,
-                        text="Capture", font=("Helvetica", 18), text_color="white",
-                        command=lambda:capture_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
-capture_settings.pack(expand=1)
-capture_settings.place(x=220, y=680)
+loop_settings.place(x=116, y=10)
 
 north = ctk.CTkButton(live_loop_frame,
-                        text="N", font=("Helvetica", 18), text_color="white",
+                        text="N", font=("Helvetica", 16), text_color="white",
                         command=moveNorth,
                         fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
+                        height=32, width=32,
                         corner_radius=10,
                         border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 north.pack(padx=10, pady=10, anchor="nw", expand=1)
-north.place(x=730, y=250)
+north.place(x=680, y=294)
 
 south = ctk.CTkButton(live_loop_frame,
-                        text="S", font=("Helvetica", 18), text_color="white",
+                        text="S", font=("Helvetica", 16), text_color="white",
                         command=moveSouth,
                         fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
+                        height=32, width=32,
                         corner_radius=10,
                         border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 south.pack(padx=10, pady=10, anchor="nw", expand=1)
-south.place(x=730, y=350)
+south.place(x=680, y=394)
 
 east = ctk.CTkButton(live_loop_frame,
-                        text="E", font=("Helvetica", 18), text_color="white",
+                        text="E", font=("Helvetica", 16), text_color="white",
                         command=moveEast,
                         fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
+                        height=32, width=32,
                         corner_radius=10,
                         border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 east.pack(padx=10, pady=10, anchor="nw", expand=1)
-east.place(x=780, y=300)
+east.place(x=730, y=344)
 
 west = ctk.CTkButton(live_loop_frame,
-                        text="W", font=("Helvetica", 18), text_color="white",
+                        text="W", font=("Helvetica", 16), text_color="white",
                         command=moveWest,
                         fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
+                        height=32, width=32,
                         corner_radius=10,
                         border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 west.pack(padx=10, pady=10, anchor="nw", expand=1)
-west.place(x=680, y=300)
-
-
+west.place(x=630, y=344)
 
 start_Z_liveloop = ctk.CTkButton(live_loop_frame,
-                        text="Start Main Live Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:startLiveZImage(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+                                text="Start Live Loop", font=("Helvetica", 18), text_color="white",
+                                command=lambda:startLiveZImage(),
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 start_Z_liveloop.pack(anchor="nw", expand=1)
-start_Z_liveloop.place(x=620, y=100)
+start_Z_liveloop.place(x=610, y=130)
 
 stop_Z_liveloop = ctk.CTkButton(live_loop_frame,
-                        text="Stop Main Live Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:stopLiveZImage(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+                                text="Stop Live Loop", font=("Helvetica", 18), text_color="white",
+                                command=lambda:stopLiveZImage(),
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 stop_Z_liveloop.pack(anchor="nw", expand=1)
-stop_Z_liveloop.place(x=620, y=150)
+stop_Z_liveloop.place(x=610, y=170)
 
-start_PI_liveloop = ctk.CTkButton(live_loop_frame,
-                        text="Start Guide Live Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:startLivePIImage(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-start_PI_liveloop.pack(anchor="nw", expand=1)
-start_PI_liveloop.place(x=620, y=500)
-
-stop_PI_liveloop = ctk.CTkButton(live_loop_frame,
-                        text="Stop Guide Live Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:stopLivePIImage(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        height=40, width=40,
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-stop_PI_liveloop.pack(anchor="nw", expand=1)
-stop_PI_liveloop.place(x=620, y=550)
-
-close_button1 = ctk.CTkButton(live_loop_frame,
-                                    text="Close", font=("Helvetica", 18), text_color="white",
-                                    command=close,
+capture_ZWO_image = ctk.CTkButton(live_loop_frame,
+                                    text="Capture ZWO Image", font=("Helvetica", 18), text_color="white",
+                                    command=lambda:takeZWOPicture(float(ZWOexposure_time_text.get("1.0", "end-1c")), "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures", "ZWO_IMAGE_XXX"),
                                     fg_color="black", bg_color="black", hover_color="dark grey",
-                                    height=30, width=60,
                                     corner_radius=10,
                                     border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-close_button1.pack(padx=10, pady=10, anchor="nw", expand=1)
+capture_ZWO_image.pack(anchor="nw", expand=1)
+capture_ZWO_image.place(x=610, y=210)
+
+start_PI_liveloop = ctk.CTkButton(live_loop_frame,
+                                    text="Start Live Loop", font=("Helvetica", 18), text_color="white",
+                                    command=lambda:startLivePIImage(),
+                                    fg_color="black", bg_color="black", hover_color="dark grey",
+                                    corner_radius=10,
+                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+start_PI_liveloop.pack(anchor="nw", expand=1)
+start_PI_liveloop.place(x=610, y=470)
+
+stop_PI_liveloop = ctk.CTkButton(live_loop_frame,
+                                    text="Stop Live Loop", font=("Helvetica", 18), text_color="white",
+                                    command=lambda:stopLivePIImage(),
+                                    fg_color="black", bg_color="black", hover_color="dark grey",
+                                    corner_radius=10,
+                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+stop_PI_liveloop.pack(anchor="nw", expand=1)
+stop_PI_liveloop.place(x=610, y=510)
+
+capture_PI_image = ctk.CTkButton(live_loop_frame,
+                                    text="Capture PI Image", font=("Helvetica", 18), text_color="white",
+                                    command=lambda:takePIPicture(float(PIexposure_time_text.get("1.0", "end-1c")), "/home/starspec/STSC/STSCvenv/UI/PICaptures", "PI_IMAGE_XXX"),
+                                    fg_color="black", bg_color="black", hover_color="dark grey",
+                                    corner_radius=10,
+                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+capture_PI_image.pack(anchor="nw", expand=1)
+capture_PI_image.place(x=610, y=550)
+
+phd2_button = ctk.CTkButton(live_loop_frame,
+                            text="PHD2", font=("Helvetica", 18), text_color="white",
+                            command=open_phd2,
+                            fg_color="black", bg_color="black", hover_color="dark grey", text_color_disabled="red",
+                            width=50,
+                            anchor="nw",
+                            corner_radius=10,
+                            border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+phd2_button.pack(expand=1)
+phd2_button.place(x=582, y=10)
+
+spectrum_analysis_button = ctk.CTkButton(live_loop_frame,
+                            text="Spectrum Analysis", font=("Helvetica", 18), text_color="white",
+                            command=open_analysis,
+                            fg_color="black", bg_color="black", hover_color="dark grey", text_color_disabled="red",
+                            width=50,
+                            anchor="nw",
+                            corner_radius=10,
+                            border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+spectrum_analysis_button.pack(expand=1)
+spectrum_analysis_button.place(x=660, y=10)
+
+close_button1 = ctk.CTkButton(live_loop_frame,
+                                text="Close", font=("Helvetica", 18), text_color="white",
+                                command=close,
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                height=30, width=60,
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+close_button1.pack(anchor="nw", expand=1)
 close_button1.place(x=760, y=680)
-#----- END LIVE LOOP BUTTONS -----
+#----- END LIVE VIEW BUTTONS -----
 
-#----- START LOOP SETTINGS BUTTONS -----
-live_view = ctk.CTkButton(loop_settings_frame,
-                        text="Live View", font=("Helvetica", 18), text_color="white",
-                        command=lambda:live_loop_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+#----- START SETTINGS BUTTONS -----
+live_view = ctk.CTkButton(settings_frame,
+                            text="Live View", font=("Helvetica", 18), text_color="white",
+                            command=lambda:live_loop_frame.tkraise(),
+                            fg_color="black", bg_color="black", hover_color="dark grey",
+                            width=50,
+                            anchor="nw",
+                            corner_radius=10,
+                            border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 live_view.pack(expand=1)
-live_view.place(x=20, y=680)
+live_view.place(x=10, y=10)
 
-loop_settings = ctk.CTkButton(loop_settings_frame,
-                        text="Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:loop_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
+loop_settings = ctk.CTkButton(settings_frame,
+                                text="Settings", font=("Helvetica", 18), text_color="white",
+                                command=lambda:settings_frame.tkraise(),
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                width=50,
+                                anchor="nw",
+                                corner_radius=10,
+                                border_color="white", border_width=2)
 loop_settings.pack(expand=1)
-loop_settings.place(x=150, y=680)
+loop_settings.place(x=116, y=10)
 
-capture_settings = ctk.CTkButton(loop_settings_frame,
-                        text="Capture", font=("Helvetica", 18), text_color="white",
-                        command=lambda:capture_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
-capture_settings.pack(expand=1)
-capture_settings.place(x=220, y=680)
-
-ZWOsubmit_button = ctk.CTkButton(loop_settings_frame,
+ZWOsubmit_button = ctk.CTkButton(settings_frame,
                                 text="Submit", font=("Helvetica", 18), text_color="white",
                                 command=submitZWOsettings,
                                 fg_color="black", bg_color="black", hover_color="dark grey",
                                 height=30, width=60,
                                 corner_radius=10,
                                 border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-ZWOsubmit_button.pack(padx=10, pady=10, anchor="nw", expand=1)
-ZWOsubmit_button.place(x=10, y=170)
+ZWOsubmit_button.pack(anchor="nw", expand=1)
+ZWOsubmit_button.place(x=100, y=260)
 
-PIsubmit_button = ctk.CTkButton(loop_settings_frame,
+PIsubmit_button = ctk.CTkButton(settings_frame,
                                 text="Submit", font=("Helvetica", 18), text_color="white",
                                 command=submitPIsettings,
                                 fg_color="black", bg_color="black", hover_color="dark grey",
@@ -573,196 +577,113 @@ PIsubmit_button = ctk.CTkButton(loop_settings_frame,
                                 corner_radius=10,
                                 border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
 PIsubmit_button.pack(padx=10, pady=10, anchor="nw", expand=1)
-PIsubmit_button.place(x=250, y=170)
+PIsubmit_button.place(x=350, y=260)
 
-close_button2 = ctk.CTkButton(loop_settings_frame,
-                                    text="Close", font=("Helvetica", 18), text_color="white",
-                                    command=close,
-                                    fg_color="black", bg_color="black", hover_color="dark grey",
-                                    height=30, width=60,
-                                    corner_radius=10,
-                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-close_button2.pack(padx=10, pady=10, anchor="nw", expand=1)
+close_button2 = ctk.CTkButton(settings_frame,
+                                text="Close", font=("Helvetica", 18), text_color="white",
+                                command=close,
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                height=30, width=60,
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+close_button2.pack(anchor="nw", expand=1)
 close_button2.place(x=760, y=680)
 
 #ZWO Camera Settings
-ZWOtitle_label = ctk.CTkLabel(loop_settings_frame,
-                            text="--- MAIN SETTINGS ---", font=("Helvetica", 18), text_color="white",
-                            fg_color="black",  bg_color="black",
-                            corner_radius=10)
+ZWOtitle_label = ctk.CTkLabel(settings_frame,
+                                text="MAIN SETTINGS", font=("Helvetica", 18), text_color="white",
+                                fg_color="black",  bg_color="black",
+                                corner_radius=10)
 ZWOtitle_label.pack(anchor="nw", expand=1)
-ZWOtitle_label.place(x=10, y=10)
+ZWOtitle_label.place(x=50, y=60)
 
 #set ZWO gain
-ZWOgain_label = ctk.CTkLabel(loop_settings_frame,
+ZWOgain_label = ctk.CTkLabel(settings_frame,
                             text="Gain:", font=("Helvetica", 18), text_color="white",
                             fg_color="black",  bg_color="black",
                             corner_radius=10)
 ZWOgain_label.pack(anchor="nw", expand=1)
-ZWOgain_label.place(x=10, y=50)
+ZWOgain_label.place(x=10, y=105)
 
-ZWOgain_text = ctk.CTkTextbox(loop_settings_frame,
-                            font=("Helvetica", 18),
-                            fg_color="white", bg_color="black", text_color="black",
-                            height=20, width=50,
-                            activate_scrollbars="False"
-                            )
+ZWOgain_text = ctk.CTkTextbox(settings_frame,
+                                font=("Helvetica", 18),
+                                fg_color="white", bg_color="black", text_color="black",
+                                height=20, width=70,
+                                activate_scrollbars="False" )
 ZWOgain_text.pack(anchor="nw", expand=1)
-ZWOgain_text.place(x=180, y=50)
+ZWOgain_text.place(x=180, y=100)
 
 #set ZWO exposure time
-ZWOexposure_time_label = ctk.CTkLabel(loop_settings_frame,
-                                    text="Exposure Time (s):", font=("Helvetica", 18), text_color="white",
-                                    fg_color="black",  bg_color="black",
-                                    height=30, width=50,
-                                    corner_radius=10)
+ZWOexposure_time_label = ctk.CTkLabel(settings_frame,
+                                        text="Exposure Time(s):", font=("Helvetica", 18), text_color="white",
+                                        fg_color="black",  bg_color="black",
+                                        corner_radius=10)
 ZWOexposure_time_label.pack(anchor="nw", expand=1)
-ZWOexposure_time_label.place(x=10, y=90)
+ZWOexposure_time_label.place(x=10, y=155)
 
-ZWOexposure_time_text = ctk.CTkTextbox(loop_settings_frame,
-                                    font=("Helvetica", 18),
-                                    fg_color="white", bg_color="black", text_color="black",
-                                    height=20, width=50,
-                                    activate_scrollbars="False"
-                                    )
+ZWOexposure_time_text = ctk.CTkTextbox(settings_frame,
+                                        font=("Helvetica", 18),
+                                        fg_color="white", bg_color="black", text_color="black",
+                                        height=20, width=70,
+                                        activate_scrollbars="False")
 ZWOexposure_time_text.pack(anchor="nw", expand=1)
-ZWOexposure_time_text.place(x=180, y=90)
+ZWOexposure_time_text.place(x=180, y=150)
 
 #set ZWO temperature
-ZWOtemperature_label = ctk.CTkLabel(loop_settings_frame,
-                                    text="Temperature (°C):", font=("Helvetica", 18), text_color="white",
+ZWOtemperature_label = ctk.CTkLabel(settings_frame,
+                                    text="Temperature(°C):", font=("Helvetica", 18), text_color="white",
                                     fg_color="black",  bg_color="black",
-                                    height=30, width=50,
                                     corner_radius=10)
 ZWOtemperature_label.pack(anchor="nw", expand=1)
-ZWOtemperature_label.place(x=10, y=130)
+ZWOtemperature_label.place(x=10, y=205)
 
-ZWOtemperature_text = ctk.CTkTextbox(loop_settings_frame,
+ZWOtemperature_text = ctk.CTkTextbox(settings_frame,
                                     font=("Helvetica", 18),
                                     fg_color="white", bg_color="black", text_color="black",
-                                    height=20, width=50,
-                                    activate_scrollbars="False"
-                                    )
+                                    height=20, width=70,
+                                    activate_scrollbars="False")
 ZWOtemperature_text.pack(anchor="nw", expand=1)
-ZWOtemperature_text.place(x=180, y=130)
+ZWOtemperature_text.place(x=180, y=200)
 
-
-PItitle_label = ctk.CTkLabel(loop_settings_frame,
-                            text="--- GUIDE SETTINGS ---", font=("Helvetica", 18), text_color="white",
+PItitle_label = ctk.CTkLabel(settings_frame,
+                            text="GUIDE SETTINGS", font=("Helvetica", 18), text_color="white",
                             fg_color="black",  bg_color="black",
                             corner_radius=10)
 PItitle_label.pack(anchor="nw", expand=1)
-PItitle_label.place(x=250, y=10)
+PItitle_label.place(x=300, y=60)
 
 #set PI gain
-PIgain_label = ctk.CTkLabel(loop_settings_frame,
+PIgain_label = ctk.CTkLabel(settings_frame,
                             text="Gain:", font=("Helvetica", 18), text_color="white",
                             fg_color="black",  bg_color="black",
                             corner_radius=10)
 PIgain_label.pack(anchor="nw", expand=1)
-PIgain_label.place(x=250, y=50)
+PIgain_label.place(x=270, y=105)
 
-PIgain_text = ctk.CTkTextbox(loop_settings_frame,
-                            font=("Helvetica", 18),
-                            fg_color="white", bg_color="black", text_color="black",
-                            height=20, width=50,
-                            activate_scrollbars="False"
-                            )
+PIgain_text = ctk.CTkTextbox(settings_frame,
+                                font=("Helvetica", 18),
+                                fg_color="white", bg_color="black", text_color="black",
+                                height=20, width=70,
+                                activate_scrollbars="False")
 PIgain_text.pack(anchor="nw", expand=1)
-PIgain_text.place(x=420, y=50)
+PIgain_text.place(x=440, y=100)
 
 #set PI exposure time
-PIexposure_time_label = ctk.CTkLabel(loop_settings_frame,
-                                    text="Exposure Time (s):", font=("Helvetica", 18), text_color="white",
-                                    fg_color="black",  bg_color="black",
-                                    height=30, width=50,
-                                    corner_radius=10)
+PIexposure_time_label = ctk.CTkLabel(settings_frame,
+                                        text="Exposure Time(s):", font=("Helvetica", 18), text_color="white",
+                                        fg_color="black",  bg_color="black",
+                                        corner_radius=10)
 PIexposure_time_label.pack(anchor="nw", expand=1)
-PIexposure_time_label.place(x=250, y=90)
+PIexposure_time_label.place(x=270, y=155)
 
-PIexposure_time_text = ctk.CTkTextbox(loop_settings_frame,
-                                    font=("Helvetica", 18),
-                                    fg_color="white", bg_color="black", text_color="black",
-                                    height=20, width=50,
-                                    activate_scrollbars="False"
-                                    )
+PIexposure_time_text = ctk.CTkTextbox(settings_frame,
+                                        font=("Helvetica", 18),
+                                        fg_color="white", bg_color="black", text_color="black",
+                                        height=20, width=70,
+                                        activate_scrollbars="False")
 PIexposure_time_text.pack(anchor="nw", expand=1)
-PIexposure_time_text.place(x=420, y=90)
+PIexposure_time_text.place(x=440, y=150)
 #----- END LOOP SETTINGS BUTTONS -----
-
-#----- START CAPTURE SETTINGS BUTTONS -----
-live_view = ctk.CTkButton(capture_settings_frame,
-                        text="Live View", font=("Helvetica", 18), text_color="white",
-                        command=lambda:live_loop_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-live_view.pack(expand=1)
-live_view.place(x=20, y=680)
-
-loop_settings = ctk.CTkButton(capture_settings_frame,
-                        text="Loop", font=("Helvetica", 18), text_color="white",
-                        command=lambda:loop_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
-loop_settings.pack(expand=1)
-loop_settings.place(x=150, y=680)
-
-capture_settings = ctk.CTkButton(capture_settings_frame,
-                        text="Capture", font=("Helvetica", 18), text_color="white",
-                        command=lambda:capture_settings_frame.tkraise(),
-                        fg_color="black", bg_color="black", hover_color="dark grey",
-                        width=50,
-                        anchor="nw",
-                        corner_radius=10,
-                        border_color="white", border_width=2)
-capture_settings.pack(expand=1)
-capture_settings.place(x=220, y=680)
-
-phd2_button = ctk.CTkButton(capture_settings_frame,
-                            text="Open PHD2", font=("Helvetica", 18), text_color="white",
-                            command=open_phd2,
-                            fg_color="black", bg_color="black", hover_color="dark grey",
-                            width=50,
-                            anchor="nw",
-                            corner_radius=10,
-                            border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-phd2_button.pack(expand=1)
-phd2_button.place(x=710, y=10)
-
-capture_ZWO_image = ctk.CTkButton(capture_settings_frame,
-                                    text="Capture ZWO Image", font=("Helvetica", 18), text_color="white",
-                                    command=lambda:takeZWOPicture(ZWOexposure_time_text.get("1.0", "end-1c"), "/home/starspec/STSC/STSCvenv/UI/ZWOCaptures", "ZWO_IMAGE_XXX"),
-                                    fg_color="black", bg_color="black", hover_color="dark grey",
-                                    height=30, width=80,
-                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-capture_ZWO_image.pack(padx=10, pady=10, anchor="nw", expand=1)
-capture_ZWO_image.place(x=520, y=680)
-
-capture_PI_image = ctk.CTkButton(capture_settings_frame,
-                                    text="Capture PI Image", font=("Helvetica", 18), text_color="white",
-                                    command=lambda:takePIPicture(int(exposure_time_text.get("1.0", "end-1c"))),
-                                    fg_color="black", bg_color="black", hover_color="dark grey",
-                                    height=30, width=80,
-                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-capture_PI_image.pack(padx=10, pady=10, anchor="nw", expand=1)
-capture_PI_image.place(x=360, y=680)
-
-close_button3 = ctk.CTkButton(capture_settings_frame,
-                                    text="Close", font=("Helvetica", 18), text_color="white",
-                                    command=close,
-                                    fg_color="black", bg_color="black", hover_color="dark grey",
-                                    height=30, width=60,
-                                    corner_radius=10,
-                                    border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-close_button3.pack(padx=10, pady=10, anchor="nw", expand=1)
-close_button3.place(x=760, y=680)
-#----- END CAPTURE SETTINGS BUTTONS -----
 
 live_loop_frame.tkraise() #start the UI on the live loop frame
 
