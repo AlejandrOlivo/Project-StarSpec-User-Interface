@@ -8,4 +8,4 @@ source STSC/STSCvenv/bin/activate
 cd STSC/STSCvenv/UI
 
 #run user interface file in python
-python StarSpec_UI.py
+python StarSpec.py
