@@ -32,7 +32,6 @@ import dbus
 from dbus import glib
 import threading
 
-
 def ZWOLiveThreadFunc():
     while True:
         if ZWOLiveActive:
@@ -103,7 +102,20 @@ def open_phd2():
 
 #open spectrum analysis
 def open_analysis():
-    print("Displaying spectrum analysis")
+    spectrum_path = "spectrumUI.py"
+    result = subprocess.Popen(["python", spectrum_path], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    print("Opening spectrum analysis")
+    with open("temperature.txt", "r") as file:
+        content = file.read()
+    temp = content.strip("[]") + "°K"
+    print(temp)
+    
+    spectrum_temp = ctk.CTkLabel(live_loop_frame,
+                                text=f"Star temperature = {temp}", font=("Helvetica", 14), text_color="white",
+                                fg_color="black",  bg_color="black",
+                                corner_radius=10)
+    spectrum_temp.pack(anchor="nw", expand=1)
+    spectrum_temp.place(x=590, y=80)
 
 #takes and saves a picture on the ZWO camera
 def takeZWOPicture(exp_time, save_location, upload_prefix):
@@ -138,6 +150,11 @@ def takePIPicture(exp_time, save_location, upload_prefix):
     while iface.getPropertyState(PIcam, "CCD_EXPOSURE") == "Busy":
         time.sleep(1)
 
+#
+#HERE LIES THE IMAGE FORMATTING BUTTONS
+#
+
+
 #submit the ZWO settings to the INDI server
 def submitZWOsettings():
     gain = ZWOgain_text.get("1.0", "end-1c")
@@ -156,6 +173,9 @@ def submitZWOsettings():
             messagebox.showerror("Invalid Input", "Please enter a valid gain")
             return
     print(f"ZWO gain is set at {gain_value}")
+    
+    
+    
     '''
     if not exposure_time.strip():  #check if the content is empty or contains only whitespace
         exposure_time_value = 1
@@ -219,11 +239,11 @@ def moveNorth():
     if north_active == "Off":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_NS", "MOTION_NORTH", "On")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_NS")
-        print("Mount -- Starting North Motion")
+        print("Starting North Motion")
     if north_active == "On":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_NS", "MOTION_NORTH", "Off")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_NS")
-        print("Mount -- Stopping North Motion")
+        print("Stopping North Motion")
 
 #move the mount south
 def moveSouth():
@@ -231,11 +251,11 @@ def moveSouth():
     if south_active == "Off":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_NS", "MOTION_SOUTH", "On")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_NS")
-        print("Mount -- Starting South Motion")
+        print("Starting South Motion")
     if south_active == "On":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_NS", "MOTION_SOUTH", "Off")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_NS")
-        print("Mount  -- Stopping South Motion")
+        print("Stopping South Motion")
 
 #move the mount east
 def moveEast():
@@ -243,11 +263,11 @@ def moveEast():
     if east_active == "Off":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_WE", "MOTION_EAST", "On")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_WE")
-        print("Mount -- Starting East Motion")
+        print("Starting East Motion")
     if east_active == "On":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_WE", "MOTION_EAST", "Off")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_WE")
-        print("Mount  -- Stopping East Motion")
+        print("Stopping East Motion")
 
 #move the mount west
 def moveWest():
@@ -255,11 +275,11 @@ def moveWest():
     if west_active == "Off":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_WE", "MOTION_WEST", "On")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_WE")
-        print("Mount -- Starting West Motion")
+        print("Starting West Motion")
     if west_active == "On":
         iface.setSwitch(Mount, "TELESCOPE_MOTION_WE", "MOTION_WEST", "Off")
         iface.sendProperty(Mount, "TELESCOPE_MOTION_WE")
-        print("Mount  -- Stopping West Motion")
+        print("Stopping West Motion")
 
 #terminate UI
 def close():
@@ -369,12 +389,15 @@ iface.sendProperty(ZWOcam, "UPLOAD_MODE")
 iface.setSwitch(PIcam, "UPLOAD_MODE", "UPLOAD_LOCAL", "On")
 iface.sendProperty(PIcam, "UPLOAD_MODE")
 
-iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RAW", "Off")
-iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
+#set image format
+iface.setSwitch(ZWOcam, "CCD_CAPTURE_FORMAT", "ASI_IMG_RAW16", "On")
+iface.sendProperty(ZWOcam, "CCD_CAPTURE_FORMAT")
 iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RGB", "On")
 iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
 
-iface.setSwitch(Mount, "TELESCOPE_SLEW_RATE", "SLEW_MAX", "On")
+iface.setSwitch(Mount, "TELESCOPE_SLEW_RATE", "5x", "Off")
+iface.sendProperty(Mount, "TELESCOPE_SLEW_RATE")
+iface.setSwitch(Mount, "TELESCOPE_SLEW_RATE", "9x", "On")
 iface.sendProperty(Mount, "TELESCOPE_SLEW_RATE")
  
 #set location of images
@@ -595,26 +618,6 @@ loop_settings = ctk.CTkButton(settings_frame,
 loop_settings.pack(expand=1)
 loop_settings.place(x=116, y=10)
 
-ZWOsubmit_button = ctk.CTkButton(settings_frame,
-                                text="Submit", font=("Helvetica", 18), text_color="white",
-                                command=submitZWOsettings,
-                                fg_color="black", bg_color="black", hover_color="dark grey",
-                                height=30, width=60,
-                                corner_radius=10,
-                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-ZWOsubmit_button.pack(anchor="nw", expand=1)
-ZWOsubmit_button.place(x=100, y=260)
-
-PIsubmit_button = ctk.CTkButton(settings_frame,
-                                text="Submit", font=("Helvetica", 18), text_color="white",
-                                command=submitPIsettings,
-                                fg_color="black", bg_color="black", hover_color="dark grey",
-                                height=30, width=60,
-                                corner_radius=10,
-                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
-PIsubmit_button.pack(padx=10, pady=10, anchor="nw", expand=1)
-PIsubmit_button.place(x=350, y=260)
-
 close_button2 = ctk.CTkButton(settings_frame,
                                 text="Close", font=("Helvetica", 18), text_color="white",
                                 command=close,
@@ -719,6 +722,75 @@ PIexposure_time_text = ctk.CTkTextbox(settings_frame,
                                         activate_scrollbars="False")
 PIexposure_time_text.pack(anchor="nw", expand=1)
 PIexposure_time_text.place(x=440, y=150)
+
+ZWOsubmit_button = ctk.CTkButton(settings_frame,
+                                text="Submit", font=("Helvetica", 18), text_color="white",
+                                command=submitZWOsettings,
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                height=30, width=60,
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+ZWOsubmit_button.pack(anchor="nw", expand=1)
+ZWOsubmit_button.place(x=100, y=260)
+
+PIsubmit_button = ctk.CTkButton(settings_frame,
+                                text="Submit", font=("Helvetica", 18), text_color="white",
+                                command=submitPIsettings,
+                                fg_color="black", bg_color="black", hover_color="dark grey",
+                                height=30, width=60,
+                                corner_radius=10,
+                                border_color="white", border_width=2, background_corner_colors=("black", "black", "black", "black"))
+PIsubmit_button.pack(padx=10, pady=10, anchor="nw", expand=1)
+PIsubmit_button.place(x=350, y=260)
+
+Zcheck_on = ctk.StringVar(value="on")
+Zcheck_off = ctk.StringVar(value="off")
+PIcheck_on = ctk.StringVar(value="on")
+PIcheck_off = ctk.StringVar(value="off")
+
+def Z_RAW():
+    if check_RAW_Z.get() == "on":
+        check_RGB_Z.deselect()
+        iface.setSwitch(ZWOcam, "CCD_CAPTURE_FORMAT", "ASI_IMG_RAW16", "On")
+        iface.sendProperty(ZWOcam, "CCD_CAPTURE_FORMAT")
+    
+def Z_RGB():
+    if check_RGB_Z.get() == "on":
+        check_RAW_Z.deselect()
+        iface.setSwitch(ZWOcam, "CCD_CAPTURE_FORMAT", "ASI_IMG_RGB24", "On")
+        iface.sendProperty(ZWOcam, "CCD_CAPTURE_FORMAT")
+
+def PI_RAW():
+    if check_RAW_PI.get() == "on":
+        check_RGB_PI.deselect()
+        iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RAW", "On")
+        iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
+    
+def PI_RGB():
+    if check_RGB_PI.get() == "on":
+        check_RAW_PI.deselect()
+        iface.setSwitch(PIcam, "CCD_CAPTURE_FORMAT", "INDI_RGB", "On")
+        iface.sendProperty(PIcam, "CCD_CAPTURE_FORMAT")
+
+check_RAW_Z = ctk.CTkCheckBox(settings_frame, command=Z_RAW, text="RAW 16", onvalue="on", offvalue="off",
+                            font=("Helvetica", 18), text_color="white", bg_color="black", variable=Zcheck_on, corner_radius=10)
+check_RAW_Z.pack()
+check_RAW_Z.place(x=90, y=350)
+
+check_RGB_Z = ctk.CTkCheckBox(settings_frame, command=Z_RGB, text="RGB 24", onvalue="on", offvalue="off",
+                            font=("Helvetica", 18), text_color="white", bg_color="black", variable=Zcheck_off, corner_radius=10)
+check_RGB_Z.pack()
+check_RGB_Z.place(x=90, y=390)
+
+check_RAW_PI = ctk.CTkCheckBox(settings_frame, command=PI_RAW, text="RAW", onvalue="on", offvalue="off",
+                            font=("Helvetica", 18), text_color="white", bg_color="black", variable=PIcheck_off, corner_radius=10)
+check_RAW_PI.pack()
+check_RAW_PI.place(x=300, y=350)
+
+check_RGB_PI = ctk.CTkCheckBox(settings_frame, command=PI_RGB, text="RGB", onvalue="on", offvalue="off",
+                            font=("Helvetica", 18), text_color="white", bg_color="black", variable=PIcheck_on, corner_radius=10)
+check_RGB_PI.pack()
+check_RGB_PI.place(x=300, y=390)
 #----- END LOOP SETTINGS BUTTONS -----
 
 live_loop_frame.tkraise() #start the UI on the live loop frame
