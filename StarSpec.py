@@ -181,7 +181,7 @@ def Mount_Fast():
 def Mount_Slow():
     if check_SLOW_Mount.get() == "on":
         check_FAST_Mount.deselect()
-        iface.setSwitch(Mount, "TELESCOPE_SLEW_RATE", "7x", "On")
+        iface.setSwitch(Mount, "TELESCOPE_SLEW_RATE", "5x", "On")
         iface.sendProperty(Mount, "TELESCOPE_SLEW_RATE")
 
 #Submit ZWO settings to the INDI server
@@ -676,7 +676,7 @@ mount_speed.pack(anchor="nw", expand=1)
 mount_speed.place(x=80, y=655)
 
 check_SLOW_Mount = ctk.CTkCheckBox(settings_frame,
-                                    text="7x", font=("Helvetica", 28), text_color="white",
+                                    text="5x", font=("Helvetica", 28), text_color="white",
                                     command=Mount_Slow,
                                     bg_color="black", fg_color="white", hover_color="white", checkmark_color="black",
                                     height= 30, width=65,
