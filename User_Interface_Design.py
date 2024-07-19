@@ -494,7 +494,7 @@ mount_speed.pack(anchor="nw", expand=1)
 mount_speed.place(x=80, y=655)
 
 check_SLOW_Mount = ctk.CTkCheckBox(settings_frame,
-                                    text="7x", font=("Helvetica", 28), text_color="white",
+                                    text="5x", font=("Helvetica", 28), text_color="white",
                                     command=Mount_Slow,
                                     bg_color="black", fg_color="white", hover_color="white", checkmark_color="black",
                                     height= 30, width=65,
