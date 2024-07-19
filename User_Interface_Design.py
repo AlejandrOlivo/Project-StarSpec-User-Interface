@@ -96,10 +96,10 @@ def open_analysis():
     
     spectrum_temp = ctk.CTkLabel(live_view_frame,
                                 text=f"Star temperature = {temp}", font=("Helvetica", 14), text_color="white",
-                                fg_color="black",  bg_color="black",
+                                fg_color="black",  bg_color="#091421",
                                 corner_radius=10)
     spectrum_temp.pack(anchor="nw", expand=1)
-    spectrum_temp.place(x=590, y=80)
+    spectrum_temp.place(x=580, y=70)
 
 #Captures and saves image from ZWO camera
 def takeZWOPicture(exp_time, save_location, upload_prefix):
